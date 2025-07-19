@@ -4,7 +4,7 @@ require_once '../config/database.php';
 require_once '../includes/functions.php';
 
 if (isLoggedIn()) {
-    header('Location: /');
+    header('Location: /index.php');
     exit();
 }
 
@@ -12,11 +12,11 @@ $error = '';
 $success = '';
 
 if ($_POST) {
-    $username = $_POST['username'] ?? '';
-    $email = $_POST['email'] ?? '';
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
-    $affiliate_code = $_POST['affiliate_code'] ?? '';
+    $affiliate_code = trim($_POST['affiliate_code'] ?? '');
     
     if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Por favor, preencha todos os campos obrigatórios.';
@@ -28,7 +28,7 @@ if ($_POST) {
         $database = new Database();
         $db = $database->getConnection();
         
-        // Check if username or email already exists
+        // Verificar se username ou email já existem
         $query = "SELECT id FROM users WHERE username = ? OR email = ?";
         $stmt = $db->prepare($query);
         $stmt->execute([$username, $email]);
@@ -36,7 +36,7 @@ if ($_POST) {
         if ($stmt->rowCount() > 0) {
             $error = 'Nome de usuário ou email já existe.';
         } else {
-            // Validate affiliate code if provided
+            // Validar código de afiliado se fornecido
             $referred_by = null;
             if (!empty($affiliate_code)) {
                 $query = "SELECT id FROM users WHERE affiliate_code = ?";
@@ -60,7 +60,7 @@ if ($_POST) {
                 if ($stmt->execute([$username, $email, $hashed_password, $user_affiliate_code, $referred_by])) {
                     $user_id = $db->lastInsertId();
                     
-                    // Process affiliate bonus if user was referred
+                    // Processar bônus de afiliado se usuário foi indicado
                     if ($referred_by) {
                         processAffiliateBonus($user_id);
                     }
@@ -93,13 +93,13 @@ if ($_POST) {
             
             <?php if ($error): ?>
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    <?php echo $error; ?>
+                    <?php echo htmlspecialchars($error); ?>
                 </div>
             <?php endif; ?>
             
             <?php if ($success): ?>
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                    <?php echo $success; ?>
+                    <?php echo htmlspecialchars($success); ?>
                 </div>
             <?php endif; ?>
             
@@ -146,7 +146,7 @@ if ($_POST) {
             <div class="text-center mt-4">
                 <p class="text-gray-600">
                     Já tem uma conta? 
-                    <a href="/auth/login" class="text-primary hover:underline">Faça login</a>
+                    <a href="/auth/login.php" class="text-primary hover:underline">Faça login</a>
                 </p>
             </div>
         </div>

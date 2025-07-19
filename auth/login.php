@@ -3,14 +3,14 @@ require_once '../includes/session.php';
 require_once '../config/database.php';
 
 if (isLoggedIn()) {
-    header('Location: /');
+    header('Location: /index.php');
     exit();
 }
 
 $error = '';
 
 if ($_POST) {
-    $email = $_POST['email'] ?? '';
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
     if (empty($email) || empty($password)) {
@@ -19,20 +19,22 @@ if ($_POST) {
         $database = new Database();
         $db = $database->getConnection();
         
-        $query = "SELECT id, username, email, password, is_admin FROM users WHERE email = ?";
+        $query = "SELECT id, username, email, password, is_admin, is_active FROM users WHERE email = ?";
         $stmt = $db->prepare($query);
         $stmt->execute([$email]);
         
         if ($stmt->rowCount() > 0) {
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $user = $stmt->fetch();
             
-            if (password_verify($password, $user['password'])) {
+            if (!$user['is_active']) {
+                $error = 'Conta desativada. Entre em contato com o suporte.';
+            } elseif (password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['is_admin'] = $user['is_admin'];
                 
-                header('Location: /');
+                header('Location: /index.php');
                 exit();
             } else {
                 $error = 'Email ou senha incorretos.';
@@ -62,7 +64,7 @@ if ($_POST) {
             
             <?php if ($error): ?>
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    <?php echo $error; ?>
+                    <?php echo htmlspecialchars($error); ?>
                 </div>
             <?php endif; ?>
             
@@ -89,7 +91,7 @@ if ($_POST) {
             <div class="text-center mt-4">
                 <p class="text-gray-600">
                     Não tem uma conta? 
-                    <a href="/auth/register" class="text-primary hover:underline">Cadastre-se</a>
+                    <a href="/auth/register.php" class="text-primary hover:underline">Cadastre-se</a>
                 </p>
             </div>
         </div>

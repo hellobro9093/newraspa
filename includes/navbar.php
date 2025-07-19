@@ -9,17 +9,17 @@ $navData = getNavbarData();
     <div class="mx-auto max-w-(--max-layout-width) px-4 w-full h-full">
         <nav class="flex justify-between items-center h-full gap-6">
             <div class="flex items-center gap-4">
-                <a href="/" class="text-2xl font-semibold">
+                <a href="/index.php" class="text-2xl font-semibold">
                     <img src="https://ik.imagekit.io/azx3nlpdu/logo.png?updatedAt=1752172431999" class="h-[42px] object-contain">
                 </a>
             </div>
             
             <div class="md:flex items-center gap-6 font-medium hidden *:hover:bg-accent *:px-2 *:py-1 *:rounded-sm *:active:scale-90 *:transition-transform">
-                <a href="/" class="">Inicio</a>
-                <a href="/raspadinhas" class="">Raspadinhas</a>
-                <a href="/indique" class="">Indique e Ganhe</a>
+                <a href="/index.php" class="">Inicio</a>
+                <a href="/raspadinhas.php" class="">Raspadinhas</a>
+                <a href="/indique.php" class="">Indique e Ganhe</a>
                 <?php if (isAdmin()): ?>
-                    <a href="/admin" class="">Admin</a>
+                    <a href="/admin/index.php" class="">Admin</a>
                 <?php endif; ?>
             </div>
             
@@ -62,16 +62,16 @@ $navData = getNavbarData();
                         
                         <!-- Dropdown menu -->
                         <div class="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
-                            <a href="/perfil/conta" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a>
-                            <a href="/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a>
+                            <a href="/perfil/conta.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Perfil</a>
+                            <a href="/auth/logout.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a>
                         </div>
                     </div>
                 <?php else: ?>
                     <div class="flex items-center gap-2">
-                        <a href="/auth/login" class="inline-flex items-center justify-center whitespace-nowrap text-sm transition-all bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-8 rounded-md gap-1.5 px-3 font-semibold">
+                        <a href="/auth/login.php" class="inline-flex items-center justify-center whitespace-nowrap text-sm transition-all bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-8 rounded-md gap-1.5 px-3 font-semibold">
                             Entrar
                         </a>
-                        <a href="/auth/register" class="inline-flex items-center justify-center whitespace-nowrap text-sm transition-all border border-primary text-primary hover:bg-primary hover:text-white h-8 rounded-md gap-1.5 px-3 font-semibold">
+                        <a href="/auth/register.php" class="inline-flex items-center justify-center whitespace-nowrap text-sm transition-all border border-primary text-primary hover:bg-primary hover:text-white h-8 rounded-md gap-1.5 px-3 font-semibold">
                             Cadastrar
                         </a>
                     </div>

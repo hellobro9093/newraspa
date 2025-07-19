@@ -8,46 +8,83 @@ requireAdmin();
 $database = new Database();
 $db = $database->getConnection();
 
-// Get statistics
+// Buscar estatísticas
 $stats = [];
 
-// Total users
+// Total de usuários
 $query = "SELECT COUNT(*) as total FROM users WHERE is_admin = FALSE";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$stats['total_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$stats['total_users'] = $stmt->fetch()['total'];
 
-// Total deposits
+// Total depositado
 $query = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'deposit' AND status = 'completed'";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$stats['total_deposits'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$stats['total_deposits'] = $stmt->fetch()['total'];
 
-// Total withdrawals
+// Total sacado
 $query = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'withdrawal' AND status = 'completed'";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$stats['total_withdrawals'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$stats['total_withdrawals'] = $stmt->fetch()['total'];
 
-// Total affiliate earnings
+// Total de bônus de afiliados
 $query = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'affiliate_bonus'";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$stats['total_affiliate_earnings'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+$stats['total_affiliate_earnings'] = $stmt->fetch()['total'];
 
-// Recent users
+// Usuários recentes
 $query = "SELECT id, username, email, balance, created_at FROM users WHERE is_admin = FALSE ORDER BY created_at DESC LIMIT 10";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$recent_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$recent_users = $stmt->fetchAll();
 
-// Recent transactions
+// Transações recentes
 $query = "SELECT t.*, u.username FROM transactions t 
           JOIN users u ON t.user_id = u.id 
           ORDER BY t.created_at DESC LIMIT 10";
 $stmt = $db->prepare($query);
 $stmt->execute();
-$recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$recent_transactions = $stmt->fetchAll();
+
+// Handle settings update
+if ($_POST && isset($_POST['update_settings'])) {
+    $affiliate_bonus = $_POST['affiliate_bonus'] ?? '0.50';
+    $min_withdrawal = $_POST['min_withdrawal'] ?? '10.00';
+    $max_withdrawal = $_POST['max_withdrawal'] ?? '5000.00';
+    
+    updateSystemSetting('affiliate_bonus', $affiliate_bonus);
+    updateSystemSetting('min_withdrawal', $min_withdrawal);
+    updateSystemSetting('max_withdrawal', $max_withdrawal);
+    
+    $success_message = 'Configurações atualizadas com sucesso!';
+}
+
+// Handle user actions
+if ($_POST && isset($_POST['user_action'])) {
+    $user_id = $_POST['user_id'];
+    $action = $_POST['action'];
+    
+    if ($action == 'toggle_status') {
+        $query = "UPDATE users SET is_active = NOT is_active WHERE id = ?";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$user_id]);
+    } elseif ($action == 'add_balance') {
+        $amount = floatval($_POST['amount']);
+        if ($amount > 0) {
+            updateUserBalance($user_id, $amount, 'add');
+            addTransaction($user_id, 'deposit', $amount, 'Adicionado pelo admin');
+        }
+    } elseif ($action == 'remove_balance') {
+        $amount = floatval($_POST['amount']);
+        if ($amount > 0) {
+            updateUserBalance($user_id, $amount, 'subtract');
+            addTransaction($user_id, 'withdrawal', $amount, 'Removido pelo admin');
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -66,8 +103,14 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="mx-auto max-w-(--max-layout-width) min-h-[80lvh] w-full px-5 pt-6 md:pt-7 pb-12">
                 <div class="mb-6">
                     <h1 class="text-3xl font-bold text-gray-800 mb-2">Painel Administrativo</h1>
-                    <p class="text-gray-600">Gerencie usuários, transações e estatísticas da plataforma</p>
+                    <p class="text-gray-600">Gerencie usuários, transações e configurações da plataforma</p>
                 </div>
+                
+                <?php if (isset($success_message)): ?>
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                        <?php echo $success_message; ?>
+                    </div>
+                <?php endif; ?>
                 
                 <!-- Statistics Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -128,6 +171,41 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
                 
+                <!-- System Settings -->
+                <div class="bg-white rounded-lg shadow-sm border mb-8">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-semibold text-gray-800">Configurações do Sistema</h2>
+                    </div>
+                    <div class="p-6">
+                        <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Bônus de Afiliado (R$)</label>
+                                <input type="number" step="0.01" name="affiliate_bonus" 
+                                       value="<?php echo getSystemSetting('affiliate_bonus', '0.50'); ?>"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Saque Mínimo (R$)</label>
+                                <input type="number" step="0.01" name="min_withdrawal" 
+                                       value="<?php echo getSystemSetting('min_withdrawal', '10.00'); ?>"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Saque Máximo (R$)</label>
+                                <input type="number" step="0.01" name="max_withdrawal" 
+                                       value="<?php echo getSystemSetting('max_withdrawal', '5000.00'); ?>"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div class="md:col-span-3">
+                                <button type="submit" name="update_settings" 
+                                        class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90">
+                                    Atualizar Configurações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
                 <!-- Recent Users and Transactions -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Recent Users -->
@@ -138,7 +216,7 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="p-6">
                             <div class="space-y-4">
                                 <?php foreach ($recent_users as $user): ?>
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex items-center justify-between border-b pb-2">
                                         <div>
                                             <p class="font-medium text-gray-800"><?php echo htmlspecialchars($user['username']); ?></p>
                                             <p class="text-sm text-gray-600"><?php echo htmlspecialchars($user['email']); ?></p>
@@ -161,13 +239,13 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <div class="p-6">
                             <div class="space-y-4">
                                 <?php foreach ($recent_transactions as $transaction): ?>
-                                    <div class="flex items-center justify-between">
+                                    <div class="flex items-center justify-between border-b pb-2">
                                         <div>
                                             <p class="font-medium text-gray-800"><?php echo htmlspecialchars($transaction['username']); ?></p>
                                             <p class="text-sm text-gray-600"><?php echo ucfirst(str_replace('_', ' ', $transaction['type'])); ?></p>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-medium <?php echo $transaction['type'] == 'deposit' || $transaction['type'] == 'affiliate_bonus' ? 'text-green-600' : 'text-red-600'; ?>">
+                                            <p class="font-medium <?php echo in_array($transaction['type'], ['deposit', 'affiliate_bonus', 'game_win']) ? 'text-green-600' : 'text-red-600'; ?>">
                                                 <?php echo formatCurrency($transaction['amount']); ?>
                                             </p>
                                             <p class="text-sm text-gray-600"><?php echo date('d/m/Y H:i', strtotime($transaction['created_at'])); ?></p>
@@ -179,10 +257,10 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
                 
-                <!-- Admin Actions -->
+                <!-- Quick Actions -->
                 <div class="mt-8 bg-white rounded-lg shadow-sm border p-6">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Ações Administrativas</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Ações Rápidas</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <a href="/admin/users.php" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors text-center">
                             Gerenciar Usuários
                         </a>
@@ -191,6 +269,9 @@ $recent_transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </a>
                         <a href="/admin/affiliates.php" class="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 transition-colors text-center">
                             Sistema de Afiliados
+                        </a>
+                        <a href="/admin/games.php" class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors text-center">
+                            Histórico de Jogos
                         </a>
                     </div>
                 </div>

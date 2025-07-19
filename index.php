@@ -29,19 +29,19 @@ require_once 'includes/functions.php';
                     
                     <?php if (isLoggedIn()): ?>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="/raspadinhas" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                            <a href="/raspadinhas.php" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
                                 Jogar Agora
                             </a>
-                            <a href="/indique" class="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
+                            <a href="/indique.php" class="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
                                 Indique e Ganhe
                             </a>
                         </div>
                     <?php else: ?>
                         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="/auth/register" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                            <a href="/auth/register.php" class="bg-primary text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
                                 Cadastre-se Grátis
                             </a>
-                            <a href="/auth/login" class="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
+                            <a href="/auth/login.php" class="border border-primary text-primary px-8 py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition-colors">
                                 Fazer Login
                             </a>
                         </div>
@@ -142,7 +142,7 @@ require_once 'includes/functions.php';
                     <p class="text-xl mb-6 opacity-90">
                         Cadastre-se agora e comece a jogar! É grátis e você pode ganhar prêmios reais.
                     </p>
-                    <a href="/auth/register" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    <a href="/auth/register.php" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                         Cadastrar Agora
                     </a>
                 </div>

@@ -26,7 +26,7 @@ ORDER BY u.affiliate_earnings DESC";
 
 $stmt = $db->prepare($query);
 $stmt->execute();
-$affiliates = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$affiliates = $stmt->fetchAll();
 
 // Get recent referrals
 $query = "SELECT 
@@ -37,11 +37,11 @@ FROM affiliate_referrals r
 JOIN users referrer ON r.referrer_id = referrer.id
 JOIN users referred ON r.referred_id = referred.id
 ORDER BY r.created_at DESC
-LIMIT 20";
+LIMIT 50";
 
 $stmt = $db->prepare($query);
 $stmt->execute();
-$recent_referrals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$recent_referrals = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -101,7 +101,7 @@ $recent_referrals = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <code class="bg-gray-100 px-2 py-1 rounded text-xs">
-                                                <?php echo $_SERVER['HTTP_HOST']; ?>/auth/register?ref=<?php echo $affiliate['affiliate_code']; ?>
+                                                <?php echo $_SERVER['HTTP_HOST']; ?>/auth/register.php?ref=<?php echo $affiliate['affiliate_code']; ?>
                                             </code>
                                         </td>
                                     </tr>
@@ -123,6 +123,7 @@ $recent_referrals = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Afiliado</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Indicado</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comissão</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                                 </tr>
                             </thead>
@@ -137,6 +138,11 @@ $recent_referrals = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                                             <?php echo formatCurrency($referral['commission_earned']); ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                                                <?php echo ucfirst($referral['status']); ?>
+                                            </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <?php echo date('d/m/Y H:i', strtotime($referral['created_at'])); ?>

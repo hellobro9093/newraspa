@@ -1,8 +1,10 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 function isLoggedIn() {
-    return isset($_SESSION['user_id']);
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
 function isAdmin() {
@@ -11,14 +13,15 @@ function isAdmin() {
 
 function requireLogin() {
     if (!isLoggedIn()) {
-        header('Location: /auth/login');
+        header('Location: /auth/login.php');
         exit();
     }
 }
 
 function requireAdmin() {
+    requireLogin();
     if (!isAdmin()) {
-        header('Location: /');
+        header('Location: /index.php');
         exit();
     }
 }
@@ -36,10 +39,30 @@ function getUserData() {
     $stmt = $db->prepare($query);
     $stmt->execute([$_SESSION['user_id']]);
     
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    return $stmt->fetch();
 }
 
 function generateAffiliateCode() {
-    return strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
+    do {
+        $code = strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
+        
+        require_once __DIR__ . '/../config/database.php';
+        $database = new Database();
+        $db = $database->getConnection();
+        
+        $query = "SELECT COUNT(*) as count FROM users WHERE affiliate_code = ?";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$code]);
+        $result = $stmt->fetch();
+        
+    } while ($result['count'] > 0);
+    
+    return $code;
+}
+
+function logout() {
+    session_destroy();
+    header('Location: /index.php');
+    exit();
 }
 ?>
